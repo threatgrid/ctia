@@ -996,6 +996,33 @@
                 (-> (update-in delete-res [:errors :not-found] set)
                     (update :deleted set)))))))))
 
+(deftest check-and-prepare-bulk-max-record-visibility-test
+  (doseq [[visibility expected-errors] [["everyone" {:forbidden ["sighting-green"]}]
+                                        ["group" {:not-found ["sighting-green"]}]]]
+    (testing (str "max-record-visibility " visibility)
+      (helpers/with-properties
+        ["ctia.access-control.max-record-visibility" visibility]
+        (es-helpers/for-each-es-version
+            "a green document of another group is only visible with max-record-visibility everyone"
+            [7]
+          nil
+          (helpers/fixture-ctia-with-app
+           (fn [app]
+             (let [conn-state (get-conn-state app :sighting)]
+               (create-fn conn-state
+                          [(assoc sighting-minimal
+                                  :id "sighting-green"
+                                  :tlp "green"
+                                  :owner "jane-doe"
+                                  :groups ["group2"])]
+                          ident
+                          {:refresh "true"})
+               (is (= {:errors expected-errors}
+                      (sut/check-and-prepare-bulk conn-state
+                                                  ["sighting-green"]
+                                                  {:login "john-doe"
+                                                   :groups ["group1"]})))))))))))
+
 (deftest with-default-sort-field-test
   (let [test-cases [{:msg "Use default hardcoded value when sort_by is not defined and no default sort is configured"
                      :expected {:sort [{"_doc" :asc} {"id" :asc}]}

@@ -8,9 +8,10 @@
             [ctia.test-helpers
              [es :as es-helpers]
              [auth :refer [all-capabilities]]
-             [core :as helpers :refer [fixture-ctia-with-app DELETE GET POST]]
+             [core :as helpers :refer [fixture-ctia-with-app DELETE GET POST PUT]]
              [fake-whoami-service :as whoami-helpers]
              [store :refer [test-for-each-store-with-app]]]
+            [ctia.store :as store]
             [ctim.domain.id :as id]))
 
 (use-fixtures :once (join-fixtures [mht/fixture-schema-validation
@@ -713,6 +714,150 @@
              (is (= 200 status-3))
              (is (= (get-in authorized-groups-judgement-post [:parsed-body :id])
                     (:judgement_id verdict-3))))))))))
+
+(deftest test-authorized-fields-are-scoped-to-owner-groups
+  ;; authorized_users / authorized_groups naming another group can only be
+  ;; stored directly, as the API rejects them on write.
+  (test-for-each-store-with-app
+   (fn [app]
+     (helpers/set-capabilities! app "usera" ["groupa"] "user" all-capabilities)
+     (helpers/set-capabilities! app "userb" ["groupb"] "user" all-capabilities)
+     (whoami-helpers/set-whoami-response app "usera-key" "usera" "groupa" "user")
+     (whoami-helpers/set-whoami-response app "userb-key" "userb" "groupb" "user")
+     (let [judgement-store (helpers/get-store app :judgement)
+           params {:refresh "wait_for"}
+           ident-a {:login "usera" :groups ["groupa"]}
+           create-judgement (fn [api-key body]
+                              (POST app
+                                    "ctia/judgement"
+                                    :body (merge {:source "test"
+                                                  :severity "High"
+                                                  :confidence "High"
+                                                  :valid_time {:start_time "2016-02-12T00:00:00.000-00:00"}}
+                                                 body)
+                                    :headers {"Authorization" api-key}))
+           grant-to-group-b! (fn [short-id]
+                               (let [stored (store/read-record judgement-store short-id ident-a params)]
+                                 (store/update-record judgement-store
+                                                      short-id
+                                                      (assoc stored
+                                                             :authorized_groups ["groupb"]
+                                                             :authorized_users ["userb"])
+                                                      ident-a
+                                                      params))
+                               (let [stored (store/read-record judgement-store short-id ident-a params)]
+                                 (is (= ["groupb"] (:authorized_groups stored)))
+                                 (is (= ["userb"] (:authorized_users stored)))))
+           {status :status judgement-a :parsed-body}
+           (create-judgement "usera-key"
+                             {:observable {:value "203.0.113.10" :type "ip"}
+                              :disposition 1
+                              :priority 99
+                              :tlp "red"})
+           short-id-a (some-> (:id judgement-a) id/long-id->id :short-id)]
+       (is (= 201 status))
+       (grant-to-group-b! short-id-a)
+
+       (testing "the owner still gets the verdict of its judgement"
+         (let [{status :status verdict :parsed-body}
+               (GET app "ctia/ip/203.0.113.10/verdict"
+                    :headers {"Authorization" "usera-key"})]
+           (is (= 200 status))
+           (is (= (:id judgement-a) (:judgement_id verdict)))))
+
+       (testing "a grant to another group does not contribute to its verdict"
+         (is (= 404 (:status (GET app "ctia/ip/203.0.113.10/verdict"
+                                  :headers {"Authorization" "userb-key"})))))
+
+       (testing "a grant to another group does not allow reading the judgement"
+         (is (= 403 (:status (GET app (str "ctia/judgement/" short-id-a)
+                                  :headers {"Authorization" "userb-key"}))))
+         (doseq [[path query-params] [["ctia/ip/203.0.113.10/judgements" {}]
+                                      ["ctia/judgement/search"
+                                       {"query" "observable.value:\"203.0.113.10\""}]]]
+           (testing path
+             (let [list-ids (fn [api-key]
+                              (let [{status :status body :parsed-body}
+                                    (GET app path
+                                         :query-params query-params
+                                         :headers {"Authorization" api-key})]
+                                (is (= 200 status))
+                                (map :id body)))]
+               (is (= [(:id judgement-a)] (list-ids "usera-key")))
+               (is (empty? (list-ids "userb-key")))))))
+
+       (testing "a grant to another group does not allow deleting the judgement"
+         (is (= 403 (:status (DELETE app (str "ctia/judgement/" short-id-a)
+                                     :headers {"Authorization" "userb-key"}))))
+         (is (= 200 (:status (GET app (str "ctia/judgement/" short-id-a)
+                                  :headers {"Authorization" "usera-key"})))))
+
+       (testing "the owner can update a judgement carrying a grant to another group, which stays without effect"
+         (is (= 200 (:status (PUT app (str "ctia/judgement/" short-id-a)
+                                  :body {:observable {:value "203.0.113.10" :type "ip"}
+                                         :source "test"
+                                         :severity "High"
+                                         :confidence "High"
+                                         :valid_time {:start_time "2016-02-12T00:00:00.000-00:00"}
+                                         :disposition 2
+                                         :priority 100
+                                         :tlp "red"
+                                         :authorized_groups ["groupb"]
+                                         :authorized_users ["userb"]}
+                                  :headers {"Authorization" "usera-key"}))))
+         (let [stored (store/read-record judgement-store short-id-a ident-a params)]
+           (is (= 2 (:disposition stored)))
+           (is (= ["groupb"] (:authorized_groups stored)))
+           (is (= ["userb"] (:authorized_users stored))))
+         (is (= 404 (:status (GET app "ctia/ip/203.0.113.10/verdict"
+                                  :headers {"Authorization" "userb-key"})))))
+
+       (testing "a grant to another group does not allow updating the judgement"
+         (is (= 403 (:status (PUT app (str "ctia/judgement/" short-id-a)
+                                  :body {:observable {:value "203.0.113.10" :type "ip"}
+                                         :source "test"
+                                         :severity "High"
+                                         :confidence "High"
+                                         :valid_time {:start_time "2016-02-12T00:00:00.000-00:00"}
+                                         :disposition 1
+                                         :priority 100
+                                         :tlp "red"}
+                                  :headers {"Authorization" "userb-key"}))))
+         (is (= :access-control-error
+                (try
+                  (store/update-record judgement-store
+                                       short-id-a
+                                       (assoc (store/read-record judgement-store short-id-a ident-a params)
+                                              :disposition 1)
+                                       {:login "userb" :groups ["groupb"]}
+                                       params)
+                  nil
+                  (catch clojure.lang.ExceptionInfo e
+                    (:type (ex-data e))))))
+         (is (= 2 (:disposition (:parsed-body (GET app (str "ctia/judgement/" short-id-a)
+                                                   :headers {"Authorization" "usera-key"}))))))
+
+       (testing "a higher priority judgement of another group does not override the caller's verdict"
+         (let [{status-a :status judgement-a :parsed-body}
+               (create-judgement "usera-key"
+                                 {:observable {:value "203.0.113.20" :type "ip"}
+                                  :disposition 1
+                                  :priority 99
+                                  :tlp "red"})
+               {status-b :status judgement-b :parsed-body}
+               (create-judgement "userb-key"
+                                 {:observable {:value "203.0.113.20" :type "ip"}
+                                  :disposition 2
+                                  :priority 50})]
+           (is (= 201 status-a))
+           (is (= 201 status-b))
+           (grant-to-group-b! (some-> (:id judgement-a) id/long-id->id :short-id))
+           (let [{status :status verdict :parsed-body}
+                 (GET app "ctia/ip/203.0.113.20/verdict"
+                      :headers {"Authorization" "userb-key"})]
+             (is (= 200 status))
+             (is (= (:id judgement-b) (:judgement_id verdict)))
+             (is (= 2 (:disposition verdict))))))))))
 
 (deftest with-date-range
   (test-for-each-store-with-app

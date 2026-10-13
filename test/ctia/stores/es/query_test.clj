@@ -120,3 +120,27 @@
          (let [conn-state (:state (helpers/get-store app :sighting))]
            (is (= ["source.text" "title"]
                   (sut/rename-search-fields conn-state [:source :title])))))))))
+
+(def ^:private owning-groups-clause
+  {:bool {:filter [{:terms {"groups" ["bar"]}}
+                   {:bool {:minimum_should_match 1
+                           :should [{:terms {"tlp" ["white" "green" "amber"]}}
+                                    {:term {"owner" "foo"}}
+                                    {:term {"authorized_users" "foo"}}
+                                    {:terms {"authorized_groups" ["bar"]}}]}}]}})
+
+(defn- restriction-query [get-in-config]
+  (sut/find-restriction-query-part {:login "Foo" :groups ["Bar"]} get-in-config))
+
+(deftest find-restriction-query-part-test
+  (testing "with max-record-visibility everyone, public TLPs or documents of the caller's groups"
+    (is (= {:bool {:minimum_should_match 1
+                   :should [{:terms {"tlp" ["white" "green"]}}
+                            owning-groups-clause]}}
+           (restriction-query (helpers/build-get-in-config-fn)))))
+  (testing "with max-record-visibility group, only documents of the caller's groups"
+    (helpers/with-config-transformer*
+      #(assoc-in % [:ctia :access-control :max-record-visibility] "group")
+      #(is (= {:bool {:minimum_should_match 1
+                      :should [owning-groups-clause]}}
+              (restriction-query (helpers/build-get-in-config-fn)))))))

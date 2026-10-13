@@ -60,9 +60,27 @@
                   :groups ["bar"]
                   :authorized_users ["anyone"]}
                  {:login "anyone"
-                  :groups ["everyone"]}))))
+                  :groups ["bar"]}))))
 
 (defn test-authorized_groups-match [tlp sut-fn check-fn]
+  (is (check-fn (sut-fn
+                 {:tlp tlp
+                  :owner "foo"
+                  :groups ["bar"]
+                  :authorized_groups ["bar"]}
+                 {:login "anyone"
+                  :groups ["bar"]}))))
+
+(defn test-authorized_users-other-group [tlp sut-fn check-fn]
+  (is (check-fn (sut-fn
+                 {:tlp tlp
+                  :owner "foo"
+                  :groups ["bar"]
+                  :authorized_users ["anyone"]}
+                 {:login "anyone"
+                  :groups ["everyone"]}))))
+
+(defn test-authorized_groups-other-group [tlp sut-fn check-fn]
   (is (check-fn (sut-fn
                  {:tlp tlp
                   :owner "foo"
@@ -94,6 +112,8 @@
       (test-authorized_groups-mismatch "white" allow-read? true?)
       (test-authorized_users-match "white" allow-read? true?)
       (test-authorized_groups-match "white" allow-read? true?)
+      (test-authorized_users-other-group "white" allow-read? true?)
+      (test-authorized_groups-other-group "white" allow-read? true?)
       (test-authorized-anonymous "white" allow-read? true?))))
 
 (deftest allow-read?-tlp-green-test
@@ -108,6 +128,8 @@
       (test-authorized_groups-mismatch "green" allow-read? true?)
       (test-authorized_users-match "green" allow-read? true?)
       (test-authorized_groups-match "green" allow-read? true?)
+      (test-authorized_users-other-group "green" allow-read? true?)
+      (test-authorized_groups-other-group "green" allow-read? true?)
       (test-authorized-anonymous "green" allow-read? true?))))
 
 (deftest allow-read?-tlp-amber-test
@@ -122,6 +144,8 @@
       (test-authorized_groups-mismatch "amber" allow-read? false?)
       (test-authorized_users-match "amber" allow-read? true?)
       (test-authorized_groups-match "amber" allow-read? true?)
+      (test-authorized_users-other-group "amber" allow-read? false?)
+      (test-authorized_groups-other-group "amber" allow-read? false?)
       (test-authorized-anonymous "amber" allow-read? true?))))
 
 (deftest allow-read?-tlp-red-test
@@ -136,6 +160,8 @@
       (test-authorized_groups-mismatch "red" allow-read? false?)
       (test-authorized_users-match "red" allow-read? true?)
       (test-authorized_groups-match "red" allow-read? true?)
+      (test-authorized_users-other-group "red" allow-read? false?)
+      (test-authorized_groups-other-group "red" allow-read? false?)
       (test-authorized-anonymous "red" allow-read? true?))))
 
 
@@ -160,7 +186,9 @@
           (test-authorized_users-mismatch "white" allow-read? false?)
           (test-authorized_groups-mismatch "white" allow-read? false?)
           (test-authorized_users-match "white" allow-read? true?)
-          (test-authorized_groups-match "white" allow-read? true?))))))
+          (test-authorized_groups-match "white" allow-read? true?)
+          (test-authorized_users-other-group "white" allow-read? false?)
+          (test-authorized_groups-other-group "white" allow-read? false?))))))
 
 (deftest allow-read?-tlp-green-max-record-visibility-group-test
   (with-max-record-visibility-group
@@ -174,7 +202,9 @@
           (test-authorized_users-mismatch "green" allow-read? false?)
           (test-authorized_groups-mismatch "green" allow-read? false?)
           (test-authorized_users-match "green" allow-read? true?)
-          (test-authorized_groups-match "green" allow-read? true?))))))
+          (test-authorized_groups-match "green" allow-read? true?)
+          (test-authorized_users-other-group "green" allow-read? false?)
+          (test-authorized_groups-other-group "green" allow-read? false?))))))
 
 (deftest allow-read?-tlp-amber-max-record-visibility-group-test
   (with-max-record-visibility-group
@@ -188,7 +218,9 @@
           (test-authorized_users-mismatch "amber" allow-read? false?)
           (test-authorized_groups-mismatch "amber" allow-read? false?)
           (test-authorized_users-match "amber" allow-read? true?)
-          (test-authorized_groups-match "amber" allow-read? true?))))))
+          (test-authorized_groups-match "amber" allow-read? true?)
+          (test-authorized_users-other-group "amber" allow-read? false?)
+          (test-authorized_groups-other-group "amber" allow-read? false?))))))
 
 (deftest allow-read?-tlp-red-max-record-visibility-group-test
   (with-max-record-visibility-group
@@ -202,7 +234,9 @@
           (test-authorized_users-mismatch "red" allow-read? false?)
           (test-authorized_groups-mismatch "red" allow-read? false?)
           (test-authorized_users-match "red" allow-read? true?)
-          (test-authorized_groups-match "red" allow-read? true?))))))
+          (test-authorized_groups-match "red" allow-read? true?)
+          (test-authorized_users-other-group "red" allow-read? false?)
+          (test-authorized_groups-other-group "red" allow-read? false?))))))
 
 
 ;; -- Write tests
@@ -217,6 +251,8 @@
     (test-authorized_groups-mismatch "white" sut/allow-write? false?)
     (test-authorized_users-match "white" sut/allow-write? true?)
     (test-authorized_groups-match "white" sut/allow-write? true?)
+    (test-authorized_users-other-group "white" sut/allow-write? false?)
+    (test-authorized_groups-other-group "white" sut/allow-write? false?)
     (test-authorized-anonymous "white" sut/allow-write? false?)))
 
 (deftest allow-write?-tlp-green-test
@@ -229,6 +265,8 @@
     (test-authorized_groups-mismatch "green" sut/allow-write? false?)
     (test-authorized_users-match "green" sut/allow-write? true?)
     (test-authorized_groups-match "green" sut/allow-write? true?)
+    (test-authorized_users-other-group "green" sut/allow-write? false?)
+    (test-authorized_groups-other-group "green" sut/allow-write? false?)
     (test-authorized-anonymous "green" sut/allow-write? false?)))
 
 (deftest allow-write?-tlp-amber-test
@@ -241,6 +279,8 @@
     (test-authorized_groups-mismatch "amber" sut/allow-write? false?)
     (test-authorized_users-match "amber" sut/allow-write? true?)
     (test-authorized_groups-match "amber" sut/allow-write? true?)
+    (test-authorized_users-other-group "amber" sut/allow-write? false?)
+    (test-authorized_groups-other-group "amber" sut/allow-write? false?)
     (test-authorized-anonymous "amber" sut/allow-write? false?)))
 
 (deftest allow-write?-tlp-red-test
@@ -253,6 +293,8 @@
     (test-authorized_groups-mismatch "red" sut/allow-write? false?)
     (test-authorized_users-match "red" sut/allow-write? true?)
     (test-authorized_groups-match "red" sut/allow-write? true?)
+    (test-authorized_users-other-group "red" sut/allow-write? false?)
+    (test-authorized_groups-other-group "red" sut/allow-write? false?)
     (test-authorized-anonymous "red" sut/allow-write? false?)))
 
 ;; -- validate-authorized-groups tests
