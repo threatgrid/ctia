@@ -359,7 +359,7 @@ It returns the documents with full hits meta data including the real index in wh
   [conn-state :- ESConnState
    ids :- [s/Str]
    ident]
-  (let [get-in-config (get-in conn-state [:services :ConfigService])
+  (let [get-in-config (get-in conn-state [:services :ConfigService :get-in-config])
         doc-ids (map ensure-document-id ids)
         docs-with-indices (get-docs-with-indices conn-state doc-ids {})
         {authorized true forbidden-write false}
