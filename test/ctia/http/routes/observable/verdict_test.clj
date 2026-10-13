@@ -8,7 +8,7 @@
             [ctia.test-helpers
              [es :as es-helpers]
              [auth :refer [all-capabilities]]
-             [core :as helpers :refer [fixture-ctia-with-app DELETE GET POST]]
+             [core :as helpers :refer [fixture-ctia-with-app DELETE GET POST PUT]]
              [fake-whoami-service :as whoami-helpers]
              [store :refer [test-for-each-store-with-app]]]
             [ctia.store :as store]
@@ -791,6 +791,51 @@
                                      :headers {"Authorization" "userb-key"}))))
          (is (= 200 (:status (GET app (str "ctia/judgement/" short-id-a)
                                   :headers {"Authorization" "usera-key"})))))
+
+       (testing "the owner can update a judgement carrying a grant to another group, which stays without effect"
+         (is (= 200 (:status (PUT app (str "ctia/judgement/" short-id-a)
+                                  :body {:observable {:value "203.0.113.10" :type "ip"}
+                                         :source "test"
+                                         :severity "High"
+                                         :confidence "High"
+                                         :valid_time {:start_time "2016-02-12T00:00:00.000-00:00"}
+                                         :disposition 2
+                                         :priority 100
+                                         :tlp "red"
+                                         :authorized_groups ["groupb"]
+                                         :authorized_users ["userb"]}
+                                  :headers {"Authorization" "usera-key"}))))
+         (let [stored (store/read-record judgement-store short-id-a ident-a params)]
+           (is (= 2 (:disposition stored)))
+           (is (= ["groupb"] (:authorized_groups stored)))
+           (is (= ["userb"] (:authorized_users stored))))
+         (is (= 404 (:status (GET app "ctia/ip/203.0.113.10/verdict"
+                                  :headers {"Authorization" "userb-key"})))))
+
+       (testing "a grant to another group does not allow updating the judgement"
+         (is (= 403 (:status (PUT app (str "ctia/judgement/" short-id-a)
+                                  :body {:observable {:value "203.0.113.10" :type "ip"}
+                                         :source "test"
+                                         :severity "High"
+                                         :confidence "High"
+                                         :valid_time {:start_time "2016-02-12T00:00:00.000-00:00"}
+                                         :disposition 1
+                                         :priority 100
+                                         :tlp "red"}
+                                  :headers {"Authorization" "userb-key"}))))
+         (is (= :access-control-error
+                (try
+                  (store/update-record judgement-store
+                                       short-id-a
+                                       (assoc (store/read-record judgement-store short-id-a ident-a params)
+                                              :disposition 1)
+                                       {:login "userb" :groups ["groupb"]}
+                                       params)
+                  nil
+                  (catch clojure.lang.ExceptionInfo e
+                    (:type (ex-data e))))))
+         (is (= 2 (:disposition (:parsed-body (GET app (str "ctia/judgement/" short-id-a)
+                                                   :headers {"Authorization" "usera-key"}))))))
 
        (testing "a higher priority judgement of another group does not override the caller's verdict"
          (let [{status-a :status judgement-a :parsed-body}
