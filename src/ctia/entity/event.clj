@@ -26,6 +26,7 @@
      :timestamp   em/ts
      :entity      {:type "object"
                    :properties {:id em/token
+                                :type em/token
                                 :source_ref em/token
                                 :target_ref em/token}}
      :id          em/token
