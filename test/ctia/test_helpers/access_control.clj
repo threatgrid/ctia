@@ -68,11 +68,9 @@
            player-1-expected-entity-list
            player-2-expected-entity-list
            player-3-expected-entity-list
-           player-2-expected-delete-list]
-    :or {player-2-expected-delete-list :unset}}]
-  (let [player-2-expected-delete-list (if (= :unset player-2-expected-delete-list)
-                                         player-2-expected-entity-list
-                                         player-2-expected-delete-list)
+           player-2-expected-delete-list]}]
+  (let [player-2-expected-delete-list (or player-2-expected-delete-list
+                                          player-2-expected-entity-list)
         ;; searches
         search (fn [token]
                  (:parsed-body
