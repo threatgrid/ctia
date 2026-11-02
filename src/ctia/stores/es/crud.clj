@@ -664,7 +664,7 @@ It returns the documents with full hits meta data including the real index in wh
    caller can only delete documents it is allowed to write (XFV-120), rather
    than every document it can read.
 
-   When `es-params` does not carry `:really-delete? true` no deletion is
+   When `es-params` does not carry a truthy `:really-delete?` no deletion is
    performed: the number of matching (deletable) documents is returned as a
    dry-run preview, computed with the same write filter so the preview matches
    what an actual delete would remove."
