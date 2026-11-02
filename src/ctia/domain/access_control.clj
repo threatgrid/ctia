@@ -57,7 +57,7 @@
   [doc ident]
   (boolean
    (and
-    (seq (:groups ident))
+    (allowed-group? doc ident)
     (seq (:authorized_groups doc))
     (seq (set/intersection
           (set (:groups ident))
@@ -68,6 +68,7 @@
   (boolean
    (and
     (not (nil? (:login ident)))
+    (allowed-group? doc ident)
     (seq (:authorized_users doc))
     (seq (set/intersection
           #{(:login ident)}

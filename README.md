@@ -252,20 +252,21 @@ Document Access control is defined at the document level, rules are defined usin
 
 The `authorized_users` and `authorized_groups` document fields grant full R/W access to
 the identities they list, in addition to the access implied by the document's TLP.
+These grants only apply to identities that belong to one of the document's `groups`:
+they widen access within the owning group, never to other groups. Since members of the
+document's `groups` already have R/W access on `white`, `green` and `amber` documents,
+these grants only widen access on `red` documents, where `authorized_groups` gives the
+listed groups the same access as `amber` and `authorized_users` gives it to the listed users.
 
-For security reasons (see [XFV-20](https://cisco-sbg.atlassian.net/browse/XFV-20)) a writer
-may only reference identities they already belong to when creating or updating a document:
+A writer may only reference identities they already belong to when creating or updating a document:
 
 - `authorized_users` may only contain the caller's own login.
 - `authorized_groups` may only contain groups the caller is a member of.
 
 A create, update or patch that introduces a login or group the caller does not own is rejected
-with HTTP 400. This prevents cross-tenant "verdict poisoning", where an attacker would otherwise
-make a document visible to a victim tenant by naming the victim's login or org-id. Values that
-were already stored on a document are preserved: editing a record that already carries such a
-value does not fail, only newly-introduced foreign values are rejected.
-
-Please note that the `authorized_groups` property may work only if max record visibility is set to `everyone`
+with HTTP 400. Values that were already stored on a document are preserved: editing a record
+that already carries such a value does not fail, only newly-introduced foreign (not-owned) values are rejected.
+A stored value naming a login or group outside the document's `groups` grants no access.
 
 Examples:
 

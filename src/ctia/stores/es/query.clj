@@ -15,36 +15,19 @@
 
 (defn- write-restriction-should-clauses
   "The should-clauses shared by the read and write access-control filters.
-   These mirror the disjuncts of `ctia.domain.access-control/allow-write?`:
-   document owner (TLP-independent), `authorized_users`, `authorized_groups`,
-   and same-group records at TLP amber or below.
-
-   The trailing TLP-red owner clause is redundant: `allow-write?` has no red
-   branch, and its owner rule matches at any TLP, so the owner should-clause
-   above already covers same-group owner records at TLP red. It is kept
-   unchanged only so `find-restriction-query-part` (read) emits the exact same
-   query body as before these clauses were factored out — the read filter must
-   stay byte-identical (see XFV-120)."
+   They mirror `ctia.domain.access-control/allow-write?`: every grant is
+   scoped to the document's groups (owner at any TLP, `authorized_users`,
+   `authorized_groups`, or the whole group at TLP amber or below)."
   [login groups]
-  [;; Document Owner
-   {:bool {:filter [{:term {"owner" login}}
-                    {:terms {"groups" groups}}]}}
-
-   ;; or if user is listed in authorized_users or authorized_groups field
-   {:term {"authorized_users" login}}
-   {:terms {"authorized_groups" groups}}
-
-   ;; CTIM records with TLP equal or below amber that are owned by org BAR
-   {:bool {:must [{:terms {"tlp" (conj ac/public-tlps "amber")}}
-                  {:terms {"groups" groups}}]}}
-
-   ;; CTIM records with TLP red owned by user FOO. Redundant with the owner
-   ;; clause above (which is TLP-independent, matching owner+group at any TLP);
-   ;; retained only to keep the read filter byte-identical to its pre-refactor
-   ;; form. See the fn docstring and XFV-120.
-   {:bool {:must [{:term {"tlp" "red"}}
-                  {:term {"owner" login}}
-                  {:terms {"groups" groups}}]}}])
+  [{:bool {:filter [{:terms {"groups" groups}}
+                    {:bool {:minimum_should_match 1
+                            :should [;; TLP equal or below amber: whole group
+                                     {:terms {"tlp" (conj ac/public-tlps "amber")}}
+                                     ;; Document owner, any TLP
+                                     {:term {"owner" login}}
+                                     ;; Grants, only meaningful on red
+                                     {:term {"authorized_users" login}}
+                                     {:terms {"authorized_groups" groups}}]}}]}}])
 
 (defn find-restriction-query-part
   "Access-control filter for read operations. In addition to the write
@@ -61,14 +44,10 @@
         (cons {:terms {"tlp" ac/public-tlps}}))}}))
 
 (defn find-write-restriction-query-part
-  "Access-control filter for write/delete operations. Mirrors the disjuncts of
+  "Access-control filter for write/delete operations. Mirrors
    `ctia.domain.access-control/allow-write?`. Unlike `find-restriction-query-part`
    it never adds the `max-record-visibility=everyone` public-TLP clause, so a
-   caller cannot reach another group's TLP white/green records by blanket
-   visibility alone. It can still match a foreign group's record when that
-   record explicitly grants the caller via `authorized_users`/`authorized_groups`
-   — that is intended, since `allow-write?` grants write on the same basis.
-   See XFV-120."
+   caller cannot reach another group's TLP white/green records. See XFV-120."
   [ident]
   (let [{:keys [login groups]} (normalize-ident ident)]
     {:bool

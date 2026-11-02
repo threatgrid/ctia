@@ -186,6 +186,13 @@
       (is (= expected-body
              response-body-txt))
 
+      (testing "content does not depend on the caller's identity"
+        (let [{:keys [status body]}
+              (client/get feed-view-url-txt
+                          {:headers {"Authorization" "baruser-key"}})]
+          (is (= 200 status))
+          (is (= expected-body body))))
+
       (is (= 401 (:status response-txt-wrong-secret)))
       (is (= "wrong secret"
              response-body-txt-wrong-secret))
@@ -268,6 +275,16 @@
                                          "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"
+                                         "user")
+     (helpers/set-capabilities! app
+                                "baruser"
+                                ["bargroup"]
+                                "user"
+                                all-capabilities)
+     (whoami-helpers/set-whoami-response app
+                                         "baruser-key"
+                                         "baruser"
+                                         "bargroup"
                                          "user")
      (let [response (helpers/POST app
                                   "ctia/bundle/import"

@@ -120,20 +120,13 @@
   (let [ident {:login "Foo" :groups ["Bar"]}
         expected {:bool
                   {:minimum_should_match 1
-                   :should [;; document owner (TLP-independent)
-                            {:bool {:filter [{:term {"owner" "foo"}}
-                                             {:terms {"groups" ["bar"]}}]}}
-                            ;; explicit grants
-                            {:term {"authorized_users" "foo"}}
-                            {:terms {"authorized_groups" ["bar"]}}
-                            ;; same-group records at TLP amber or below
-                            {:bool {:must [{:terms {"tlp" (conj ac/public-tlps "amber")}}
-                                           {:terms {"groups" ["bar"]}}]}}
-                            ;; same-group owner records at TLP red (redundant
-                            ;; with the owner clause; kept for read parity)
-                            {:bool {:must [{:term {"tlp" "red"}}
-                                           {:term {"owner" "foo"}}
-                                           {:terms {"groups" ["bar"]}}]}}]}}]
+                   :should [;; every grant scoped to the caller's groups
+                            {:bool {:filter [{:terms {"groups" ["bar"]}}
+                                             {:bool {:minimum_should_match 1
+                                                     :should [{:terms {"tlp" (conj ac/public-tlps "amber")}}
+                                                              {:term {"owner" "foo"}}
+                                                              {:term {"authorized_users" "foo"}}
+                                                              {:terms {"authorized_groups" ["bar"]}}]}}]}}]}}]
     (testing "emitted write filter matches the pinned clause set, login/groups lower-cased"
       (is (= expected (sut/find-write-restriction-query-part ident))))
     (testing "the write filter never grants blanket public-TLP visibility"
@@ -156,3 +149,27 @@
          (let [conn-state (:state (helpers/get-store app :sighting))]
            (is (= ["source.text" "title"]
                   (sut/rename-search-fields conn-state [:source :title])))))))))
+
+(def ^:private owning-groups-clause
+  {:bool {:filter [{:terms {"groups" ["bar"]}}
+                   {:bool {:minimum_should_match 1
+                           :should [{:terms {"tlp" ["white" "green" "amber"]}}
+                                    {:term {"owner" "foo"}}
+                                    {:term {"authorized_users" "foo"}}
+                                    {:terms {"authorized_groups" ["bar"]}}]}}]}})
+
+(defn- restriction-query [get-in-config]
+  (sut/find-restriction-query-part {:login "Foo" :groups ["Bar"]} get-in-config))
+
+(deftest find-restriction-query-part-test
+  (testing "with max-record-visibility everyone, public TLPs or documents of the caller's groups"
+    (is (= {:bool {:minimum_should_match 1
+                   :should [{:terms {"tlp" ["white" "green"]}}
+                            owning-groups-clause]}}
+           (restriction-query (helpers/build-get-in-config-fn)))))
+  (testing "with max-record-visibility group, only documents of the caller's groups"
+    (helpers/with-config-transformer*
+      #(assoc-in % [:ctia :access-control :max-record-visibility] "group")
+      #(is (= {:bool {:minimum_should_match 1
+                      :should [owning-groups-clause]}}
+              (restriction-query (helpers/build-get-in-config-fn)))))))
