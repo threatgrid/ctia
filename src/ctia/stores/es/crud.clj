@@ -603,15 +603,9 @@ It returns the documents with full hits meta data including the real index in wh
          {:keys [filter-map range full-text]} search-query
          range-query (when range
                        {:range range})
-         ;; Access-control filter selection is mandatory and fail-closed: the
-         ;; caller MUST pass an explicit :read or :write. There is no default --
-         ;; an omitted key leaves `access-control` nil and the `case` below
-         ;; throws, so a future destructive path that forgets :access-control
-         ;; fails loudly instead of silently widening a delete to the broader
-         ;; read filter. An unknown value (typo, wrong type) throws for the same
-         ;; reason. Delete operations pass :write so a caller can only remove
-         ;; documents it is allowed to write; read/count/aggregate pass :read
-         ;; (XFV-120).
+         ;; The 3-arity defaults to :read. Here a missing or unknown
+         ;; :access-control throws rather than falling back to the read filter;
+         ;; delete passes :write (XFV-120).
          restriction-query-part (case access-control
                                   :write (es.query/find-write-restriction-query-part ident)
                                   :read  (es.query/find-restriction-query-part ident get-in-config))

@@ -526,7 +526,13 @@
                                  :query_mode :simple_query_string}
                                 {:query "lucene"
                                  :query_mode :query_string}]}
-                   ident))))))))))
+                   ident)))
+           (testing "the 4-arity requires an explicit :read or :write access-control"
+             (is (thrown? IllegalArgumentException
+                          (sut/make-search-query es-conn-state {:filter-map filter-map} ident {})))
+             (is (thrown? IllegalArgumentException
+                          (sut/make-search-query es-conn-state {:filter-map filter-map} ident
+                                                 {:access-control :bogus})))))))))))
 
 (deftest make-aggregation-test
   (is (= {:metric
