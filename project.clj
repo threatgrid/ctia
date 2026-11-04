@@ -151,7 +151,7 @@
                  ;; Hooks
                  [threatgrid/redismq "0.1.1"]
 
-                 [org.apache.zookeeper/zookeeper "3.8.4"] ; override zookeeper-clj, org.onyxplatform/onyx-kafka
+                 [org.apache.zookeeper/zookeeper "3.8.6"] ; override zookeeper-clj, org.onyxplatform/onyx-kafka
                  [commons-io "2.20.0"] ;; address CVE-2024-47554; aligned with ring/ring-core 1.15.3
                  [args4j "2.33"] ;bump org.onyxplatform/onyx-kafka, threatgrid/ctim
                  [com.stuartsierra/component "1.1.0"] ;org.onyxplatform/onyx-kafka internal override
