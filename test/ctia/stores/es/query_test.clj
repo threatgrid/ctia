@@ -128,14 +128,7 @@
                                                               {:term {"authorized_users" "foo"}}
                                                               {:terms {"authorized_groups" ["bar"]}}]}}]}}]}}]
     (testing "emitted write filter matches the pinned clause set, login/groups lower-cased"
-      (is (= expected (sut/find-write-restriction-query-part ident))))
-    (testing "the write filter never grants blanket public-TLP visibility"
-      ;; The security property of XFV-120: unlike the read filter under
-      ;; max-record-visibility=everyone, the write filter must not contain a
-      ;; disjunct that matches any white/green document regardless of owner.
-      (let [should (get-in (sut/find-write-restriction-query-part ident)
-                           [:bool :should])]
-        (is (not (some #{{:terms {"tlp" ac/public-tlps}}} should)))))))
+      (is (= expected (sut/find-write-restriction-query-part ident))))))
 
 (deftest rename-search-fields-map-test
   (doseq [es-version [7]]

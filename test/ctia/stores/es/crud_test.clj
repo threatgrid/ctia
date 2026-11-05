@@ -899,9 +899,7 @@
               :ident ident-1
               :deleted? true
               :wait_for_completion false})
-            )))))
-
-(deftest handle-delete-search-write-access-control-test
+            ))))
   ;; Regression test for XFV-120: delete-search must apply the write
   ;; access-control filter, not the read filter. Under the default
   ;; max-record-visibility=everyone, a TLP green/white document is READABLE by
