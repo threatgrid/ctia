@@ -589,7 +589,8 @@ It returns the documents with full hits meta data including the real index in wh
                                             get-in-config)))))))
 
 (s/defn make-search-query :- {s/Keyword s/Any}
-  "Translate SearchQuery map into ES Query DSL map"
+  "Translate SearchQuery map into ES Query DSL map.
+   `:access-control` selects the read or write restriction filter (the 3-arity uses `:read`)."
   ([es-conn-state :- ESConnState
     search-query :- SearchQuery
     ident]
@@ -597,15 +598,14 @@ It returns the documents with full hits meta data including the real index in wh
   ([es-conn-state :- ESConnState
     search-query :- SearchQuery
     ident
-    {:keys [extra-filters access-control]}]
+    {:keys [extra-filters access-control]} :- {:access-control (s/enum :read :write)
+                                               (s/optional-key :extra-filters) [(s/pred map?)]}]
    (let [{:keys [services]} es-conn-state
          {{:keys [get-in-config]} :ConfigService} services
          {:keys [filter-map range full-text]} search-query
          range-query (when range
                        {:range range})
-         ;; The 3-arity defaults to :read. Here a missing or unknown
-         ;; :access-control throws rather than falling back to the read filter;
-         ;; delete passes :write (XFV-120).
+         ;; No default clause: with schema validation off, a bad value must throw, not fall back to :read.
          restriction-query-part (case access-control
                                   :write (es.query/find-write-restriction-query-part ident)
                                   :read  (es.query/find-restriction-query-part ident get-in-config))
