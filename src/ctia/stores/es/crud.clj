@@ -588,6 +588,10 @@ It returns the documents with full hits meta data including the real index in wh
                                             ident
                                             get-in-config)))))))
 
+(s/defschema MakeSearchQueryOpts
+  {:access-control (s/enum :read :write)
+   (s/optional-key :extra-filters) [(s/pred map?)]})
+
 (s/defn make-search-query :- {s/Keyword s/Any}
   "Translate SearchQuery map into ES Query DSL map.
    `:access-control` selects the read or write restriction filter (the 3-arity uses `:read`)."
@@ -598,8 +602,7 @@ It returns the documents with full hits meta data including the real index in wh
   ([es-conn-state :- ESConnState
     search-query :- SearchQuery
     ident
-    {:keys [extra-filters access-control]} :- {:access-control (s/enum :read :write)
-                                               (s/optional-key :extra-filters) [(s/pred map?)]}]
+    {:keys [extra-filters access-control]} :- MakeSearchQueryOpts]
    (let [{:keys [services]} es-conn-state
          {{:keys [get-in-config]} :ConfigService} services
          {:keys [filter-map range full-text]} search-query

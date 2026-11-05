@@ -909,7 +909,8 @@
   ;; Regression test for XFV-120: delete-search must apply the write
   ;; access-control filter, not the read filter. Under the default
   ;; max-record-visibility=everyone, a TLP green/white document is READABLE by
-  ;; any group, but only WRITABLE (deletable) by its owning group. delete-search
+  ;; any group, but WRITABLE (deletable) only within its owning groups (their
+  ;; members, its owner, or explicitly authorized users/groups). delete-search
   ;; must therefore refuse to delete another group's green/white records.
   (es-helpers/for-each-es-version
       "handle-delete-search shall apply write access control, not read visibility"
