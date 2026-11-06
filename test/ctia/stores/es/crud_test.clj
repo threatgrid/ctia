@@ -5,6 +5,7 @@
             [clojure.test :as t
              :refer
              [are deftest is testing use-fixtures]]
+            [ctia.domain.access-control :as cdac]
             [ctia.entity.sighting.schemas :as ss]
             [ctia.flows.crud :refer [gen-random-uuid]]
             [ctia.stores.es.crud :as sut]
@@ -525,7 +526,19 @@
                                  :query_mode :simple_query_string}
                                 {:query "lucene"
                                  :query_mode :query_string}]}
-                   ident))))))))))
+                   ident)))
+           (testing "the 4-arity requires an explicit :read or :write access-control"
+             (is (thrown-with-msg? clojure.lang.ExceptionInfo #"does not match schema"
+                                   (sut/make-search-query es-conn-state {:filter-map filter-map} ident {})))
+             (is (thrown-with-msg? clojure.lang.ExceptionInfo #"does not match schema"
+                                   (sut/make-search-query es-conn-state {:filter-map filter-map} ident
+                                                          {:access-control :bogus})))
+             (s/without-fn-validation
+              (is (thrown? IllegalArgumentException
+                           (sut/make-search-query es-conn-state {:filter-map filter-map} ident {})))
+              (is (thrown? IllegalArgumentException
+                           (sut/make-search-query es-conn-state {:filter-map filter-map} ident
+                                                  {:access-control :bogus}))))))))))))
 
 (deftest make-aggregation-test
   (is (= {:metric
@@ -841,6 +854,7 @@
                                      query
                                      ident
                                      {:wait_for_completion wait_for_completion
+                                      :really-delete? true
                                       :refresh "true"}))
                                  "the number of deleted entities shall be equal to the number of matched")
                              (let [remaining (count-fn es-conn-state query ident)]
@@ -891,7 +905,61 @@
               :ident ident-1
               :deleted? true
               :wait_for_completion false})
-            )))))
+            ))))
+  ;; Regression test for XFV-120: delete-search must apply the write
+  ;; access-control filter, not the read filter. Under the default
+  ;; max-record-visibility=everyone, a TLP green/white document is READABLE by
+  ;; any group, but WRITABLE (deletable) only within its owning groups (their
+  ;; members, its owner, or explicitly authorized users/groups). delete-search
+  ;; must therefore refuse to delete another group's green/white records.
+  (es-helpers/for-each-es-version
+      "handle-delete-search shall apply write access control, not read visibility"
+      [7]
+      #(es-index/delete! % "ctia_*")
+    (helpers/fixture-ctia-with-app
+        (fn [app]
+          (let [es-conn-state (get-conn-state app :sighting)
+                owner-ident {:login "johndoe"
+                             :groups ["group1"]}
+                foreign-ident {:login "janedoe"
+                               :groups ["group2"]}
+                green-data (map (fn [doc] (assoc doc :tlp "green"))
+                                high-t1-title1)
+                query {:full-text [{:query "title1"}]
+                       :filter-map {:confidence "High"}}
+                get-in-config (helpers/current-get-in-config-fn app)]
+            (is (cdac/max-record-visibility-everyone? get-in-config)
+                "test assumes the default max-record-visibility=everyone")
+            (create-fn es-conn-state green-data owner-ident {:refresh "true"})
+
+            (testing "a foreign group can READ the owner's green records"
+              (is (= (count green-data)
+                     (count-fn es-conn-state query foreign-ident))
+                  "read visibility exposes green records across groups under `everyone`"))
+
+            (testing "delete-search dry-run for a foreign group matches nothing (write ACL)"
+              (is (zero?
+                   (sut/handle-delete-search
+                    es-conn-state query foreign-ident
+                    {:really-delete? false :refresh "true"}))
+                  "the foreign group cannot write the owner's green records"))
+
+            (testing "destructive delete-search by a foreign group removes nothing"
+              (is (zero?
+                   (sut/handle-delete-search
+                    es-conn-state query foreign-ident
+                    {:really-delete? true :wait_for_completion true :refresh "true"}))
+                  "no foreign green records shall be deleted")
+              (is (= (count green-data)
+                     (count-fn es-conn-state query owner-ident))
+                  "the owner's records survive a foreign delete-search"))
+
+            (testing "the owner can still delete its own green records"
+              (is (= (count green-data)
+                     (sut/handle-delete-search
+                      es-conn-state query owner-ident
+                      {:really-delete? true :wait_for_completion true :refresh "true"})))
+              (is (zero? (count-fn es-conn-state query owner-ident)))))))))
 
 (deftest docs-with-indices-test
   (es-helpers/for-each-es-version
