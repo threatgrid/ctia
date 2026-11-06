@@ -64,6 +64,7 @@ function build-and-push-docker-image {
   cat <<EOF >"$tempdir"/Dockerfile
 FROM artifactory.devhub-cloud.cisco.com/sto-ccc-docker/hardened_alpine:${ALPINE_VERSION}
 
+# brotli-libs floor: CVE-2026-111497 (XDR-66110). Keep the quotes: unquoted >= is a shell redirect.
 RUN apk update && \
     apk upgrade --no-cache && \
     apk add --no-cache openjdk21-jre libc6-compat tini 'brotli-libs>=1.2.1-r0' && \
