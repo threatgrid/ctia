@@ -826,6 +826,56 @@
          (doseq [test-case test-plan]
            (check-aggregate test-case)))))))
 
+;; Regression test for XFV-120: delete-search must apply the write
+;; access-control filter, not the read filter. Under the default
+;; max-record-visibility=everyone, a TLP green/white document is READABLE by
+;; any group, but WRITABLE (deletable) only within its owning groups (their
+;; members, its owner, or explicitly authorized users/groups). delete-search
+;; must therefore refuse to delete another group's green/white records.
+(defn- delete-search-write-acl-scenario [app]
+  (let [es-conn-state (get-conn-state app :sighting)
+        owner-ident {:login "johndoe"
+                     :groups ["group1"]}
+        foreign-ident {:login "janedoe"
+                       :groups ["group2"]}
+        green-data (map (fn [doc] (assoc doc :tlp "green"))
+                        high-t1-title1)
+        query {:full-text [{:query "title1"}]
+               :filter-map {:confidence "High"}}
+        get-in-config (helpers/current-get-in-config-fn app)]
+    (is (cdac/max-record-visibility-everyone? get-in-config)
+        "test assumes the default max-record-visibility=everyone")
+    (create-fn es-conn-state green-data owner-ident {:refresh "true"})
+
+    (testing "a foreign group can READ the owner's green records"
+      (is (= (count green-data)
+             (count-fn es-conn-state query foreign-ident))
+          "read visibility exposes green records across groups under `everyone`"))
+
+    (testing "delete-search dry-run for a foreign group matches nothing (write ACL)"
+      (is (zero?
+           (sut/handle-delete-search
+            es-conn-state query foreign-ident
+            {:really-delete? false :refresh "true"}))
+          "the foreign group cannot write the owner's green records"))
+
+    (testing "destructive delete-search by a foreign group removes nothing"
+      (is (zero?
+           (sut/handle-delete-search
+            es-conn-state query foreign-ident
+            {:really-delete? true :wait_for_completion true :refresh "true"}))
+          "no foreign green records shall be deleted")
+      (is (= (count green-data)
+             (count-fn es-conn-state query owner-ident))
+          "the owner's records survive a foreign delete-search"))
+
+    (testing "the owner can still delete its own green records"
+      (is (= (count green-data)
+             (sut/handle-delete-search
+              es-conn-state query owner-ident
+              {:really-delete? true :wait_for_completion true :refresh "true"})))
+      (is (zero? (count-fn es-conn-state query owner-ident))))))
+
 (deftest handle-delete-search
   (es-helpers/for-each-es-version
       "handle-delete-search shall properly apply query and params, delete matched data, and respect access control"
@@ -906,60 +956,11 @@
               :deleted? true
               :wait_for_completion false})
             ))))
-  ;; Regression test for XFV-120: delete-search must apply the write
-  ;; access-control filter, not the read filter. Under the default
-  ;; max-record-visibility=everyone, a TLP green/white document is READABLE by
-  ;; any group, but WRITABLE (deletable) only within its owning groups (their
-  ;; members, its owner, or explicitly authorized users/groups). delete-search
-  ;; must therefore refuse to delete another group's green/white records.
   (es-helpers/for-each-es-version
       "handle-delete-search shall apply write access control, not read visibility"
       [7]
       #(es-index/delete! % "ctia_*")
-    (helpers/fixture-ctia-with-app
-        (fn [app]
-          (let [es-conn-state (get-conn-state app :sighting)
-                owner-ident {:login "johndoe"
-                             :groups ["group1"]}
-                foreign-ident {:login "janedoe"
-                               :groups ["group2"]}
-                green-data (map (fn [doc] (assoc doc :tlp "green"))
-                                high-t1-title1)
-                query {:full-text [{:query "title1"}]
-                       :filter-map {:confidence "High"}}
-                get-in-config (helpers/current-get-in-config-fn app)]
-            (is (cdac/max-record-visibility-everyone? get-in-config)
-                "test assumes the default max-record-visibility=everyone")
-            (create-fn es-conn-state green-data owner-ident {:refresh "true"})
-
-            (testing "a foreign group can READ the owner's green records"
-              (is (= (count green-data)
-                     (count-fn es-conn-state query foreign-ident))
-                  "read visibility exposes green records across groups under `everyone`"))
-
-            (testing "delete-search dry-run for a foreign group matches nothing (write ACL)"
-              (is (zero?
-                   (sut/handle-delete-search
-                    es-conn-state query foreign-ident
-                    {:really-delete? false :refresh "true"}))
-                  "the foreign group cannot write the owner's green records"))
-
-            (testing "destructive delete-search by a foreign group removes nothing"
-              (is (zero?
-                   (sut/handle-delete-search
-                    es-conn-state query foreign-ident
-                    {:really-delete? true :wait_for_completion true :refresh "true"}))
-                  "no foreign green records shall be deleted")
-              (is (= (count green-data)
-                     (count-fn es-conn-state query owner-ident))
-                  "the owner's records survive a foreign delete-search"))
-
-            (testing "the owner can still delete its own green records"
-              (is (= (count green-data)
-                     (sut/handle-delete-search
-                      es-conn-state query owner-ident
-                      {:really-delete? true :wait_for_completion true :refresh "true"})))
-              (is (zero? (count-fn es-conn-state query owner-ident)))))))))
+    (helpers/fixture-ctia-with-app delete-search-write-acl-scenario)))
 
 (deftest docs-with-indices-test
   (es-helpers/for-each-es-version
