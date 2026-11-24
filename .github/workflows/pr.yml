@@ -40,7 +40,7 @@ env:
   BB_VERSION: 1.12.194
   DEFAULT_JAVA_VERSION: 21
   ARTIFACTORY_URL: artifactory.devhub-cloud.cisco.com
-  ALPINE_VERSION: "3.22"
+  ALPINE_VERSION: "3.24"
   # Per-service GitHub Actions OIDC role ARNs for CI image pushes (XDR-59654 /
   # XDR-59666). These are plaintext identifiers, not credentials: assuming a role
   # is IAM-gated by each role's OIDC trust policy (pinned to threatgrid/ctia and,
