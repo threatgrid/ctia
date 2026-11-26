@@ -7,9 +7,9 @@ on:
   push:
     branches:
       - master
-      # Note: full regex not supported here, hardcoding vX.X and vX.X.X
+      # Release branches (vX.Y.Z). vX.Y branches are not built: they are not
+      # covered by the release-branch ruleset, so they get no AWS access.
       # See https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#filter-pattern-cheat-sheet
-      - "v[0-9]+.[0-9]+"
       - "v[0-9]+.[0-9]+.[0-9]+"
   # Cron job: runs a matrix of JVM and Clojure versions, which can
   # be configured in the `cron-matrix` function in ./scripts/actions/print-matrix.clj
@@ -19,7 +19,7 @@ on:
     - cron: "0 3 * * *"
 
 # No OIDC by default. Only the `deploy` job mints a GitHub OIDC token, and only
-# inside an approval-gated environment (XDR-67016).
+# inside a branch-gated environment (XDR-67016).
 permissions:
   contents: read
 
@@ -42,13 +42,12 @@ env:
   ARTIFACTORY_URL: artifactory.devhub-cloud.cisco.com
   ALPINE_VERSION: "3.24"
   # AWS access (XDR-67016): the CI role ARNs are environment secrets, not
-  # workflow env vars. Only the `deploy` job can read them, and only after a
-  # core-development reviewer approves the environment:
-  #   CI-AUTO     master, vX.Y          AWS_INT_ROLE_ARN
-  #   CI-RELEASE  vX.Y.Z                AWS_INT_ROLE_ARN, AWS_PROD_ROLE_ARN
+  # workflow env vars. Only the `deploy` job can read them, and each environment
+  # admits only a protected branch:
+  #   CI-AUTO     master   (PR review required)       AWS_INT_ROLE_ARN
+  #   CI-RELEASE  vX.Y.Z   (org release-branch ruleset) AWS_INT_ROLE_ARN, AWS_PROD_ROLE_ARN
   # The IAM roles trust only repo:threatgrid/ctia:environment:CI-AUTO / CI-RELEASE
-  # (terraform in advthreat/tenzin), so a PR or a job without the environment
-  # cannot assume them.
+  # (terraform in advthreat/tenzin). PRs and custom branches get no AWS access.
 
 jobs:
   setup:
@@ -383,8 +382,8 @@ jobs:
 
       - run: echo "All tests pass!"
   # Pick the GitHub environment for `deploy` from the pushed ref. This is only
-  # routing: the environment's deployment branch policy and required reviewers
-  # are enforced by GitHub, so editing this job cannot widen access.
+  # routing: the environment's deployment branch policy is enforced by GitHub,
+  # so editing this job cannot widen access.
   deploy-env:
     runs-on: "ubuntu-22.04"
     if: github.event_name == 'push' && github.repository == 'threatgrid/ctia'
@@ -397,7 +396,7 @@ jobs:
         run: |
           if [[ "$REF" =~ ^refs/heads/v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             name=CI-RELEASE
-          elif [[ "$REF" == refs/heads/master || "$REF" =~ ^refs/heads/v[0-9]+\.[0-9]+$ ]]; then
+          elif [[ "$REF" == refs/heads/master ]]; then
             name=CI-AUTO
           else
             echo "::error::no deploy environment for ${REF}"
@@ -411,7 +410,7 @@ jobs:
     needs: [all-pr-checks, deploy-env]
     # see on.push.branches for which branches are built on push
     if: github.event_name == 'push' && github.repository == 'threatgrid/ctia'
-    # Approval-gated environment; the only job allowed to mint an OIDC token.
+    # Branch-gated environment; the only job allowed to mint an OIDC token.
     environment: ${{ needs.deploy-env.outputs.name }}
     permissions:
       contents: read
