@@ -7,28 +7,52 @@
    [schema-tools.core :as st]
    [schema.core :as s]))
 
-(defn find-restriction-query-part
-  [{:keys [login groups]} get-in-config]
+(defn- normalize-ident
   ;; TODO do we really want to discard case on that?
-  (let [login (str/lower-case login)
-        groups (map str/lower-case groups)]
+  [{:keys [login groups]}]
+  {:login (str/lower-case login)
+   :groups (map str/lower-case groups)})
+
+(defn- write-restriction-should-clauses
+  "The should-clauses shared by the read and write access-control filters.
+   They mirror `ctia.domain.access-control/allow-write?`: every grant is
+   scoped to the document's groups (owner at any TLP, `authorized_users`,
+   `authorized_groups`, or the whole group at TLP amber or below)."
+  [login groups]
+  [{:bool {:filter [{:terms {"groups" groups}}
+                    {:bool {:minimum_should_match 1
+                            :should [;; TLP equal or below amber: whole group
+                                     {:terms {"tlp" (conj ac/public-tlps "amber")}}
+                                     ;; Document owner, any TLP
+                                     {:term {"owner" login}}
+                                     ;; Grants, only meaningful on red
+                                     {:term {"authorized_users" login}}
+                                     {:terms {"authorized_groups" groups}}]}}]}}])
+
+(defn find-restriction-query-part
+  "Access-control filter for read operations. In addition to the write
+   disjuncts, when `ctia.access-control.max-record-visibility` is `everyone`
+   it also matches any TLP white/green document regardless of owner/groups."
+  [ident get-in-config]
+  (let [{:keys [login groups]} (normalize-ident ident)]
     {:bool
      {:minimum_should_match 1
       :should
-      (cond->> [;; Documents owned by one of the user's groups
-                {:bool {:filter [{:terms {"groups" groups}}
-                                 {:bool {:minimum_should_match 1
-                                         :should [;; TLP equal or below amber: whole group
-                                                  {:terms {"tlp" (conj ac/public-tlps "amber")}}
-                                                  ;; Document owner, any TLP
-                                                  {:term {"owner" login}}
-                                                  ;; Grants, only meaningful on red
-                                                  {:term {"authorized_users" login}}
-                                                  {:terms {"authorized_groups" groups}}]}}]}}]
-
+      (cond->> (write-restriction-should-clauses login groups)
         ;; Any Green/White TLP if max-visibility is set to `everyone`
         (ac/max-record-visibility-everyone? get-in-config)
         (cons {:terms {"tlp" ac/public-tlps}}))}}))
+
+(defn find-write-restriction-query-part
+  "Access-control filter for write/delete operations. Mirrors
+   `ctia.domain.access-control/allow-write?`. Unlike `find-restriction-query-part`
+   it never adds the `max-record-visibility=everyone` public-TLP clause, so a
+   caller cannot reach another group's TLP white/green records. See XFV-120."
+  [ident]
+  (let [{:keys [login groups]} (normalize-ident ident)]
+    {:bool
+     {:minimum_should_match 1
+      :should (write-restriction-should-clauses login groups)}}))
 
 
 (s/defn make-date-range-query :- search-schemas/RangeQuery

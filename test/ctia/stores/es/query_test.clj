@@ -1,6 +1,7 @@
 (ns ctia.stores.es.query-test
   (:require
    [clojure.test :refer [deftest is testing]]
+   [ctia.domain.access-control :as ac]
    [ctia.entity.entities :as entities]
    [ctia.test-helpers.core :as helpers]
    [ctia.test-helpers.es :as es-helpers]
@@ -107,6 +108,27 @@
                                assoc :type "text" :fields {:ignored-and-sad {:type "text"}}))]
           (is (= expected-result
                  (select-keys (digest-searchable-map es-mappings) [:incident :vulnerability]))))))))
+
+(deftest find-write-restriction-query-part-test
+  ;; Pin the exact clause set emitted by the write/delete access-control
+  ;; filter. `write-restriction-should-clauses` is the single source shared by
+  ;; both the read and the write filters (XFV-120), and nothing else in the
+  ;; code distinguishes which disjuncts belong to which policy. This test forces
+  ;; any edit to that shared vector to be acknowledged on the write side: a
+  ;; read-side widening (e.g. a new public-visibility disjunct) that landed
+  ;; silently on the delete path would break this assertion.
+  (let [ident {:login "Foo" :groups ["Bar"]}
+        expected {:bool
+                  {:minimum_should_match 1
+                   :should [;; every grant scoped to the caller's groups
+                            {:bool {:filter [{:terms {"groups" ["bar"]}}
+                                             {:bool {:minimum_should_match 1
+                                                     :should [{:terms {"tlp" (conj ac/public-tlps "amber")}}
+                                                              {:term {"owner" "foo"}}
+                                                              {:term {"authorized_users" "foo"}}
+                                                              {:terms {"authorized_groups" ["bar"]}}]}}]}}]}}]
+    (testing "emitted write filter matches the pinned clause set, login/groups lower-cased"
+      (is (= expected (sut/find-write-restriction-query-part ident))))))
 
 (deftest rename-search-fields-map-test
   (doseq [es-version [7]]

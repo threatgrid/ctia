@@ -19,6 +19,7 @@
             [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
             [ctia.test-helpers.search :as search-th]
             [ctia.test-helpers.store :refer [test-for-each-store-with-app]]
+            [ctia.store :as store]
             [ctim.domain.id :as id]
             [ctim.examples.bundles :refer [new-bundle-minimal]]
             [ctim.examples.incidents
@@ -886,19 +887,32 @@
          (assoc :title (str (java.util.UUID/randomUUID))
                 :revision (or order 0))))))
 
+;; Incidents in these tests are created (via create-incidents) owned by this
+;; identity, regardless of the HTTP auth mode a given deftest uses.
+(def ^:private incident-owner-ident
+  (auth/map->Identity {:login "foouser"
+                       :groups ["foogroup"]}))
+
 (s/defn create-incidents [app incidents :- (s/pred set?)]
   (bundle/import-bundle
     (-> new-bundle-minimal
         (dissoc :id)
         (assoc :incidents incidents))
     nil    ;; external-key-prefixes
-    (auth/map->Identity {:login "foouser"
-                         :groups ["foogroup"]})
+    incident-owner-ident
     (app/service-graph app)))
 
 (defn purge-incidents! [app]
-  (search-th/delete-search app :incident {:query "*"
-                                          :REALLY_DELETE_ALL_THESE_ENTITIES true})
+  ;; Delete at the store level with the owning identity (foouser/foogroup), the
+  ;; same identity create-incidents uses. Since XFV-120, delete-search enforces
+  ;; the write access-control filter, so an allow-all HTTP caller (login
+  ;; "Unknown", group "Administrators") can no longer delete another group's
+  ;; records. Going through the store with the owner identity purges the
+  ;; incidents in every auth mode these tests run under.
+  (store/delete-search (helpers/get-store app :incident)
+                       {:full-text [{:query "*" :query_mode :query_string}]}
+                       incident-owner-ident
+                       {:really-delete? true :refresh "true"})
   ;;FIXME ideally we pass wait_for=true to the delete search, but it yields a coercion error in ES.
   ;; instead, we query GET /incident/search/count until it is zero as a workaround
   (loop [tries 0]
